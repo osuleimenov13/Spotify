@@ -243,7 +243,7 @@ extension HomeViewController: UICollectionViewDelegate, UICollectionViewDataSour
             navigationController?.pushViewController(vc, animated: true)
         case .currentUserPlaylists:
             let playlist = playlists[indexPath.row]
-            let vc = PlayerViewController(playlist: playlist)
+            let vc = PlaylistViewController(playlist: playlist)
             vc.title = playlist.name
             vc.navigationItem.largeTitleDisplayMode = .never
             navigationController?.pushViewController(vc, animated: true)
