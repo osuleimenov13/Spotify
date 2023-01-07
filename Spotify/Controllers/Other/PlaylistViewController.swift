@@ -120,7 +120,6 @@ extension PlaylistViewController: UICollectionViewDelegate, UICollectionViewData
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: RecommendedTrackCollectionViewCell.identifier, for: indexPath) as? RecommendedTrackCollectionViewCell else {
             return UICollectionViewCell()
         }
-        cell.backgroundColor = .red
         cell.configure(with: viewModels[indexPath.row])
         return cell
     }
