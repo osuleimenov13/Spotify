@@ -206,6 +206,53 @@ final class APICaller {
         }
     }
     
+    // MARK: - Category
+    
+    public func getCategories(completion: @escaping (Result<[Category], Error>) -> Void) {
+        createRequest(with: URL(string: Constants.baseAPIURL + "/browse/categories?limit=20"), type: .GET) { request in
+            let task = URLSession.shared.dataTask(with: request) { data, _, error in
+                guard let data = data, error == nil else {
+                    completion(.failure(APIError.failedToGetData))
+                    return
+                }
+                
+                do {
+                    let result = try JSONDecoder().decode(CategoriesResponse.self, from: data)
+                    //try JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed)
+                    completion(.success(result.categories.items))
+                    //print("Got categories: \(result.categories.items)")
+                }
+                catch {
+                    completion(.failure(error))
+                }
+            }
+            task.resume()
+        }
+    }
+    
+    public func getCategoryPlaylist(category: Category, completion: @escaping (Result<[Playlist], Error>) -> Void) {
+        createRequest(with: URL(string: Constants.baseAPIURL + "/browse/categories/\(category.id)/playlists?limit=20"), type: .GET) { request in
+            let task = URLSession.shared.dataTask(with: request) { data, _, error in
+                guard let data = data, error == nil else {
+                    completion(.failure(APIError.failedToGetData))
+                    return
+                }
+                
+                do {
+                    let result = try JSONDecoder().decode(CategoryPlaylistResponse.self, from: data)
+                    let playlist = result.playlists.items
+                    completion(.success(playlist))
+                    //print("Got category's playlist: \(playlist)")
+                }
+                catch {
+                    completion(.failure(error))
+                    print(error.localizedDescription)
+                }
+            }
+            task.resume()
+        }
+    }
+    
     // MARK: - Private
     
     enum HTTPMethod: String {
