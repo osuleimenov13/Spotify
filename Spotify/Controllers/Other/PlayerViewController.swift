@@ -8,9 +8,23 @@
 import SDWebImage
 import UIKit
 
+protocol PlayerViewControllerDelegate: AnyObject {
+    func didTapPlayPause()
+    func didTapForward()
+    func didTapBackward()
+    func didChangeSliderTo(_ value: Float)
+}
+
+protocol PlayerDataSource: AnyObject {
+    var songName: String? { get }
+    var subtitle: String? { get }
+    var imageURL: URL? { get }
+}
+
 class PlayerViewController: UIViewController {
     
     weak var dataSource: PlayerDataSource?
+    weak var delegate: PlayerViewControllerDelegate?
     
     private let imageView: UIImageView = {
         let imageView = UIImageView()
@@ -47,6 +61,14 @@ class PlayerViewController: UIViewController {
     
     private func configureWithDataSource() {
         imageView.sd_setImage(with: dataSource?.imageURL, completed: nil)
+        controlsView.configure(with: PlayerControlsViewViewModel(
+            title: dataSource?.songName,
+            subtitle: dataSource?.subtitle
+        ))
+    }
+    
+    func refreshUI() {
+        configureWithDataSource()
     }
     
     private func configureBarButtons() {
@@ -66,16 +88,18 @@ class PlayerViewController: UIViewController {
 extension PlayerViewController: PlayerControlsViewDelegate {
     
     func playerControlsViewDidTapPlayPauseButton(_ playerControlsView: PlayerControlsView) {
-        
+        delegate?.didTapPlayPause()
     }
     
     func playerControlsViewDidTapForwardButton(_ playerControlsView: PlayerControlsView) {
-        
+        delegate?.didTapForward()
     }
     
     func playerControlsViewDidTapBackButton(_ playerControlsView: PlayerControlsView) {
-        
+        delegate?.didTapBackward()
     }
     
-    
+    func playerControlsView(_ playerControlsView: PlayerControlsView, didChangeSliderTo value: Float) {
+        delegate?.didChangeSliderTo(value)
+    }
 }
