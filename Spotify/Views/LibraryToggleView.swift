@@ -19,7 +19,7 @@ class LibraryToggleView: UIView {
         case albums
     }
     
-    private var state: State = .playlists
+    var state: State = .playlists
     
     weak var delegate: LibraryToggleViewDelegate?
     
