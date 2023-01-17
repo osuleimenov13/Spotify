@@ -68,6 +68,23 @@ class AlbumViewController: UIViewController {
         collectionView.delegate = self
         collectionView.dataSource = self
         
+        fetchData()
+
+        let addButton = UIBarButtonItem(barButtonSystemItem: .add,
+                                        target: self,
+                                        action: #selector(didTapAdd))
+        let actionButton = UIBarButtonItem(barButtonSystemItem: .action,
+                                           target: self,
+                                           action: #selector(didTapShare))
+        navigationItem.rightBarButtonItems = [addButton, actionButton]
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        collectionView.frame = view.bounds
+    }
+    
+    private func fetchData() {
         APICaller.shared.getAlbumDetails(for: album) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
@@ -85,15 +102,6 @@ class AlbumViewController: UIViewController {
                 }
             }
         }
-
-        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .action,
-                                                            target: self,
-                                                            action: #selector(didTapShare))
-    }
-    
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        collectionView.frame = view.bounds
     }
     
     @objc private func didTapShare() {
@@ -106,6 +114,22 @@ class AlbumViewController: UIViewController {
         )
         vc.popoverPresentationController?.barButtonItem = navigationItem.rightBarButtonItem
         present(vc, animated: true)
+    }
+    
+    @objc private func didTapAdd() {
+        let ac = UIAlertController(title: album.name, message: "Actions", preferredStyle: .actionSheet)
+        ac.addAction(UIAlertAction(title: "Save Album", style: .default, handler: { [weak self] _ in
+            guard let strongSelf = self else {
+                return
+            }
+            APICaller.shared.saveAlbum(album: strongSelf.album) { success in
+                if success {
+                    NotificationCenter.default.post(name: .albumSavedNotification, object: nil)
+                }
+            }
+        }))
+        ac.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        present(ac, animated: true)
     }
 }
 
