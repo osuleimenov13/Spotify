@@ -20,6 +20,8 @@ class LibraryPlaylistsViewController: UIViewController {
 
     var playlists = [Playlist]()
     
+    public var selectionHandler: ((Playlist) -> Void)?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
@@ -30,6 +32,10 @@ class LibraryPlaylistsViewController: UIViewController {
         
         setupNoPlaylistsView()
         fetchPlaylists()
+        
+        if selectionHandler != nil {
+            navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .close, target: self, action: #selector(didTapCloseButton))
+        }
     }
     
     override func viewDidLayoutSubviews() {
@@ -104,6 +110,10 @@ class LibraryPlaylistsViewController: UIViewController {
         
         present(alert, animated: true)
     }
+    
+    @objc private func didTapCloseButton() {
+        dismiss(animated: true, completion: nil)
+    }
 }
 
 extension LibraryPlaylistsViewController: ActionLabelViewDelegate {
@@ -134,6 +144,22 @@ extension LibraryPlaylistsViewController: UITableViewDelegate, UITableViewDataSo
             imageURL: URL(string: playlist.images.first?.url ?? "")))
         
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        let playlist = playlists[indexPath.row]
+        
+        guard selectionHandler == nil else {
+            selectionHandler?(playlist)
+            dismiss(animated: true, completion: nil)
+            return
+        }
+        
+        let vc = PlaylistViewController(playlist: playlist)
+        vc.isOwner = true
+        vc.navigationItem.largeTitleDisplayMode = .never
+        navigationController?.pushViewController(vc, animated: true)
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {

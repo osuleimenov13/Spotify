@@ -57,11 +57,51 @@ class HomeViewController: UIViewController {
         configureCollectionView() // need to add collectionView as first subview so header will scroll with it and then others like spinner etc.
         view.addSubview(spinner)
         fetchData()
+        addLongTapGesture()
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         collectionView.frame = view.bounds
+    }
+    
+    private func addLongTapGesture() {
+        let gesture = UILongPressGestureRecognizer(target: self, action: #selector(didLongTapped(_:)))
+        collectionView.isUserInteractionEnabled = true
+        collectionView.addGestureRecognizer(gesture)
+    }
+    
+    @objc private func didLongTapped(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began else {
+            return
+        }
+        
+        let touchPoint = gesture.location(in: collectionView)
+        guard let indexPath = collectionView.indexPathForItem(at: touchPoint),
+              indexPath.section == 2 else {
+            return
+        }
+        
+        let track = tracks[indexPath.row]
+        
+        let ac = UIAlertController(title: track.name,
+                                   message: "Would you like add this to playlist?",
+                                   preferredStyle: .actionSheet)
+        ac.addAction(UIAlertAction(title: "Add to Playlist", style: .default, handler: { [weak self] _ in
+            DispatchQueue.main.async {
+                let vc = LibraryPlaylistsViewController()
+                vc.selectionHandler = { playlist in
+                    APICaller.shared.addTrackToPlaylist(track: track, playlist: playlist) { success in
+                        // show "Added to playlist" alert or message
+                        print("Added to playlist success: \(success)")
+                    }
+                }
+                vc.title = "Select Playlist"
+                self?.present(UINavigationController(rootViewController: vc), animated: true)
+            }
+        }))
+        ac.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        present(ac, animated: true)
     }
     
     private func configureCollectionView() {

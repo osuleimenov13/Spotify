@@ -11,6 +11,8 @@ class PlaylistViewController: UIViewController {
 
     private let playlist: Playlist
     
+    public var isOwner = false
+    
     private let collectionView = UICollectionView(
         frame: .zero,
         collectionViewLayout: UICollectionViewCompositionalLayout(sectionProvider: { _, _ in
@@ -89,6 +91,41 @@ class PlaylistViewController: UIViewController {
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .action,
                                                             target: self,
                                                             action: #selector(didTapShare))
+        
+        // Adding long tap gesture recognizer
+        let gesture = UILongPressGestureRecognizer(target: self, action: #selector(didLongPress(_:)))
+        collectionView.addGestureRecognizer(gesture)
+    }
+    
+    @objc private func didLongPress(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began else {
+            return
+        }
+        
+        let touchPoint = gesture.location(in: collectionView)
+        guard let indexPath = collectionView.indexPathForItem(at: touchPoint) else {
+            return
+        }
+        let trackToDelete = tracks[indexPath.row]
+        let ac = UIAlertController(title: trackToDelete.name, message: "Would you like to remove this from playlist?", preferredStyle: .actionSheet)
+        ac.addAction(UIAlertAction(title: "Remove", style: .destructive, handler: { [weak self] _ in
+            guard let strongSelf = self else { return }
+            APICaller.shared.removeTrackFromPlaylist(track: trackToDelete, playlist: strongSelf.playlist) { success in
+                // remove from tracks and viewModels
+                if success {
+                    DispatchQueue.main.async {
+                        strongSelf.tracks.remove(at: indexPath.row)
+                        strongSelf.viewModels.remove(at: indexPath.row)
+                        strongSelf.collectionView.reloadData()
+                    }
+                }
+                else {
+                    print("Failed to remove from playlist")
+                }
+            }
+        }))
+        ac.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        present(ac, animated: true)
     }
     
     override func viewDidLayoutSubviews() {
@@ -108,6 +145,7 @@ class PlaylistViewController: UIViewController {
         present(vc, animated: true)
     }
 }
+
 
 extension PlaylistViewController: UICollectionViewDelegate, UICollectionViewDataSource {
     
@@ -150,6 +188,7 @@ extension PlaylistViewController: UICollectionViewDelegate, UICollectionViewData
         PlayerPresenter.shared.startPlayback(from: self, track: track)
     }
 }
+
 
 extension PlaylistViewController: PlaylistHeaderCollectionReusableViewDelegate {
     
